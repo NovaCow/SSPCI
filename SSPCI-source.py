@@ -3,12 +3,12 @@ import os
 import hashlib
 
 
-# Currently on Version 0.1-alpha-source
+# Currently on Version 0.2-alpha-source
 # The source version is basically the same as the release version, but will have more frequent and unstable
 # updates, so keep that in mind.
 # This is the SSPCI, Super Simple Python Command Interpreter, made in... well... Python
 # Should be supported on (almost) everything. As it uses common libraries.
-# I should at some point add error handling.
+# I should at some point add error handling. Because I don't have that currently.
 class SSPCI(cmd.Cmd):
     intro = "This is the SSPCI Shell, type help or ? to list current supported commands.\n"
     prompt = "sspci> "
@@ -16,15 +16,6 @@ class SSPCI(cmd.Cmd):
     CurrDir = os.getcwd()
 
     print("The current working directory is: " + str(CurrDir))
-
-    def do_math(self, expression):
-        """
-        A simple math command, does math.
-        """
-        if expression:
-            print(expression)  # Not yet figured this one out...
-        else:
-            print("Expression may not be a float or other error.")
 
     def do_echo(self, echo):
         """
@@ -84,11 +75,101 @@ class SSPCI(cmd.Cmd):
         else:
             print("No directory specified.")
 
-    def do_hashmd5(self, hashenc):  # Currently using MD5 and SHA-224, but I'll add SHA-1 and SHA-256 later
+    def do_filecreate(self, filename):
+        """Creates a file in the working directory. Usage: filecreate amazingFileName.txt"""
+        if filename:
+            fileToCreate = open(filename, "x")
+            print("Operation complete.")
+        else:
+            print("No filename specified.")
+
+
+    def do_filewrite(self, filename):
+        """Writes (appends) to a file. Usage: filewrite amazingFileName.txt I'm writing to a file"""
+        if filename:
+            textToWrite = input("Enter text to be written to file:\n")
+            if textToWrite:
+                fileToOpen = open(filename, "a")
+                fileToOpen.write(textToWrite)
+                fileToOpen.close()
+                print("Operation complete.")
+            else:
+                print("No text specified for writing to file.")
+        else:
+            print("No file specified or other error.")
+
+    def do_fileoverwrite(self, filename):
+        """Overwrites a file. Usage: fileoverwrite amazingFileName.txt Overwriting this file!!
+        WARNING!! THIS WILL OVERWRITE ANY FILE IT HAS PERMISSIONS TO!! MAKE SURE YOU'RE CHOOSING THE CORRECT FILE!!"""
+        if filename:
+            textToWrite = input("Enter text to be written to file:\n")
+            if textToWrite:
+                fileToOpen = open(filename, "w")
+                fileToOpen.write(textToWrite)
+                fileToOpen.close()
+                print("Operation complete.")
+            else:
+                print("No text specified for writing to file.")
+        else:
+            print("No file specified or other error.")
+
+    def do_fileread(self, filename):
+        """Reads from a file. Usage: fileread amazingFileName.txt"""
+        if filename:
+            fileToOpen = open(filename, "r")
+            print(fileToOpen.read())
+        else:
+            print("No file specified or other error.")
+
+    def do_telltime(self, time):
+        """TEST COMMAND"""
+        if time:
+            print("Telling time...")
+            print("Everything seems to be fine.")
+        else:
+            print("No time :(")
+
+    def do_hashmd5(self, hashenc):
         """Hashes what you enter in MD5 format. Usage: hashmd5 amazing-example"""
         if hashenc:
             hashenc = hashenc.encode()  # Encoding the string because otherwise the hasher doesn't work.
             hashResult = hashlib.md5(hashenc).hexdigest()  # Hashing in MD5 and saving the result in hashResult
+            print(hashResult)  # And then printing it, otherwise nothing would happen
+        else:
+            print("Nothing to hash.")
+
+    def do_hashsha1(self, hashenc):
+        """Hashes what you enter in SHA-1 format. Usage: hashmd5 amazing-example"""
+        if hashenc:
+            hashenc = hashenc.encode()  # Encoding the string because otherwise the hasher doesn't work.
+            hashResult = hashlib.sha1(hashenc).hexdigest()  # Hashing in SHA-1 and saving the result in hashResult
+            print(hashResult)  # And then printing it, otherwise nothing would happen
+        else:
+            print("Nothing to hash.")
+
+    def do_hashsha256(self, hashenc):
+        """Hashes what you enter in SHA-256 format. Usage: hashmd5 amazing-example"""
+        if hashenc:
+            hashenc = hashenc.encode()  # Encoding the string because otherwise the hasher doesn't work.
+            hashResult = hashlib.sha256(hashenc).hexdigest()  # Hashing in SHA-384 and saving the result in hashResult
+            print(hashResult)  # And then printing it, otherwise nothing would happen
+        else:
+            print("Nothing to hash.")
+
+    def do_hashsha384(self, hashenc):
+        """Hashes what you enter in SHA-384 format. Usage: hashmd5 amazing-example"""
+        if hashenc:
+            hashenc = hashenc.encode()  # Encoding the string because otherwise the hasher doesn't work.
+            hashResult = hashlib.sha384(hashenc).hexdigest()  # Hashing in SHA-384 and saving the result in hashResult
+            print(hashResult)  # And then printing it, otherwise nothing would happen
+        else:
+            print("Nothing to hash.")
+
+    def do_hashsha512(self, hashenc):
+        """Hashes what you enter in SHA-512 format. Usage: hashmd5 amazing-example"""
+        if hashenc:
+            hashenc = hashenc.encode()  # Encoding the string because otherwise the hasher doesn't work.
+            hashResult = hashlib.sha512(hashenc).hexdigest()  # Hashing in SHA-512 and saving the result in hashResult
             print(hashResult)  # And then printing it, otherwise nothing would happen
         else:
             print("Nothing to hash.")
@@ -101,6 +182,11 @@ class SSPCI(cmd.Cmd):
             print(hashResult)  # And then printing it, otherwise nothing would happen
         else:
             print("Nothing to hash.")
+
+    def do_ver(self, none):  # Adding none was necessary for positional arguments reasons.
+        """Prints the current version of SSPCI."""
+        print("SSPCI Version 0.2-alpha-source")
+        print("Made by NovaCow")
 
     def do_end(self, none):  # Adding that none was necessary, I hate it.
         """

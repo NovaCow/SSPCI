@@ -3,9 +3,9 @@ import os
 import hashlib
 import shutil
 
-# Currently on Version 0.3-alpha-latest
-# The source version is basically the same as the release version, but will have more frequent and unstable
-# updates, so keep that in mind.
+# Currently on Version 0.3.2-alpha-latest
+# Based on release: f30cee8
+# This is a "latest" release, therefore it's not very extremely stable and may be ridden with bugs.
 # This is the SSPCI, Super Simple Python Command Interpreter, made in... well... Python
 # Should be supported on (almost) everything. As it uses common libraries.
 # I should at some point add error handling. Because I don't have that currently.
@@ -112,14 +112,45 @@ class SSPCI(cmd.Cmd):
     def do_write(self, filename):
         """Writes (appends) to a file. Usage: write amazingFileName.txt I'm writing to a file"""
         if filename:
-            textToWrite = input("Enter text to be written to file:\n")
-            if textToWrite:
-                fileToOpen = open(filename, "a")
-                fileToOpen.write(textToWrite)
-                fileToOpen.close()
-                print("Operation complete.")
+            if os.path.isfile(filename):
+                textToWrite = input("Enter text to be written to file:\n")
+                if textToWrite:
+                    fileToOpen = open(filename, "a")
+                    fileToOpen.write(textToWrite)
+                    fileToOpen.close()
+                    print("Operation complete.")
+                else:
+                    print("No text specified for writing to file.")
             else:
-                print("No text specified for writing to file.")
+                fileCreateQ = input("File doesn't exist. Do you want to create it? [y/n] ")
+                if fileCreateQ == "y":
+                    fileToCreate = open(filename, "x")
+                    textToWrite = input("Enter text to be written to file:\n")
+                    if textToWrite:
+                        fileToOpen = open(filename, "a")
+                        fileToOpen.write(textToWrite)
+                        fileToOpen.close()
+                        print("Operation complete.")
+                    else:
+                        print("No text specified for writing to file.")
+                elif fileCreateQ == "Y":
+                    fileToCreate = open(filename, "x")
+                    textToWrite = input("Enter text to be written to file:\n")
+                    if textToWrite:
+                        fileToOpen = open(filename, "a")
+                        fileToOpen.write(textToWrite)
+                        fileToOpen.close()
+                        print("Operation complete.")
+                    else:
+                        print("No text specified for writing to file.")
+                elif fileCreateQ == "n":
+                    print("Aborted.")
+                elif fileCreateQ == "N":
+                    print("Aborted.")
+                else:
+                    print("No selection made, aborting...")
+
+
         else:
             print("No file specified or other error.")
 
@@ -160,19 +191,6 @@ class SSPCI(cmd.Cmd):
                 print("Source file doesn't exist.")
         else:
             print("No source file specified.")
-
-    def do_telltime(self, time):
-        """TEST COMMAND, MEANT FOR TESTING CERTAIN FUNCTIONS OF THE PROGRAM"""
-        if time:
-            print("Telling time...")
-            print("Everything seems to be fine.")
-            print(time)
-            if os.path.isdir(time):
-                print(time + " is a directory")
-            else:
-                print(time + " is not a directory")
-        else:
-            print("No time :(")
 
     def do_md5(self, hashenc):
         """Hashes what you enter in MD5 format. Usage: md5 amazing-example"""
@@ -230,8 +248,16 @@ class SSPCI(cmd.Cmd):
 
     def do_ver(self, none):  # Adding none was necessary for positional arguments reasons.
         """Prints the current version of SSPCI."""
-        print("SSPCI Version 0.3-alpha-latest")
+        print("SSPCI Version 0.3.2-alpha-latest")
         print("Made by NovaCow")
+
+    def do_exit(self, none):  # Adding that none was necessary, I hate it.
+        """
+        Ends the current SSPCI session.
+        """
+        print("Ending current SSPCI Session...")
+        print("Thank you for using SSPCI!")
+        return True
 
     def do_end(self, none):  # Adding that none was necessary, I hate it.
         """

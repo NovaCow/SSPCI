@@ -5,7 +5,7 @@ import hashlib  # This can fuck off honestly
 import shutil
 
 
-# Currently on Version 0.4.0-alpha
+# Currently on Version 0.4.1-alpha
 # This is the SSPCI, Super Simple Python Command Interpreter, made in... well... Python
 # Should be supported on (almost) everything. As it uses common libraries.
 # I should at some point add error handling. Because I don't have that currently.
@@ -16,13 +16,13 @@ class SSPCI(cmd.Cmd):
     prompt = "sspci> "
     file = None
     CurrDir = os.getcwd()
-    print("SSPCI version 0.4.0-alpha running on " + platform.system() + " " + platform.release())
+    print("SSPCI version 0.4.1-alpha running on " + platform.system() + " " + platform.release())
     if platform.system == "Linux":
-        if os.access("/root", os.R_OK):
+        if os.access("/root", os.R_OK):  # Probably the most unusable, unnecessary way to check if we're running as root
             print("WARNING!! You might be running SSPCI as root! THIS CAN CAUSE IRREPARABLE DAMAGE!! USE AT YOUR OWN RISK!")
         else:
             pass
-    elif platform.system == "Darwin":
+    elif platform.system == "Darwin":  # You think I have a Mac or something?!?
         print("You are running an unsupported operating system (Probably macOS). This should cause no harm, but if there are any bugs, I don't think I can help.")
     else:
         pass
@@ -44,7 +44,7 @@ class SSPCI(cmd.Cmd):
         On Linux: ls /home/example/example"""
         if listedDir:
             if os.path.isdir(listedDir):
-                if os.access(listedDir, os.R_OK):
+                if os.access(listedDir, os.R_OK):  # Because for some reason there are permissions involved,
                     FilesInDir = os.listdir(listedDir)  # An issue with this method is that everything is printed on one
                     print(str(FilesInDir))  # line.  So if your directory is really full, your line can be very, very long
                     # But it works, and that's what matters.
@@ -84,7 +84,7 @@ class SSPCI(cmd.Cmd):
         On Windows: mkdir d:/example/example
         On Linux: mkdir /home/example/example
         """
-        if directory:
+        if directory:  # Still have no way of checking if the parent directory exists. Meh, I'll come around to it someday.
             os.mkdir(directory)
             print("Operation complete.")
         else:
@@ -126,6 +126,8 @@ class SSPCI(cmd.Cmd):
 
     # If you did a contest to see what the most unreadable piece of code was,
     # I think this might win! Don't worry though, I'll add comments (to ease the pain).
+    # It's like I want to deprecate all other ways of file handling!
+    # I haven't added checks for permissions and whatever to the old clunky way of handling files (and probably won't). 
 
     def do_file(self, option):  # I HATE POSITIONAL ARGUMENTS!
         """Is the default command for file handling, has options as: read, write, create. Usage: file create.
@@ -134,7 +136,7 @@ class SSPCI(cmd.Cmd):
             if option == "read":  # This is maybe the most ugliest code I've ever seen! And this is just the "read" option!
                 filename = input("Enter location of the file to read:\n")
                 if os.path.isfile(filename):
-                    if os.access(filename):
+                    if os.access(filename, os.R_OK):  # I made a release version that didn't even work because of this.
                         fileToRead = open(filename, "r")
                         print(fileToRead.read())
                         fileToRead.close()
@@ -145,7 +147,7 @@ class SSPCI(cmd.Cmd):
             elif option == "write":
                 filename = input("Enter location of the file to write to:\n")
                 if os.path.isfile(filename):
-                    if os.access(filename):
+                    if os.access(filename, os.W_OK):
                         textToWrite = input("Enter text to be written to file:\n")
                         if textToWrite:
                             fileToOpen = open(filename, "a")
@@ -187,16 +189,17 @@ class SSPCI(cmd.Cmd):
             elif option == "overwrite":
                 filename = input("Enter location of the file to overwrite:\n")
                 if os.path.isfile(filename):
-                    textToWrite = input("Enter text to be written to file:\n")
-                    if textToWrite:
-                        fileToOpen = open(filename, "w")
-                        fileToOpen.write(textToWrite)
-                        fileToOpen.close()
-                        print("Operation complete.")
+                    if os.access(filename, os.W_OK):
+                        textToWrite = input("Enter text to be written to file:\n")
+                        if textToWrite:
+                            fileToOpen = open(filename, "w")
+                            fileToOpen.write(textToWrite)
+                            fileToOpen.close()
+                            print("Operation complete.")
+                        else:
+                            print("No text specified for writing to file.")
                     else:
-                        print("No text specified for writing to file.")
-                else:
-                    print("No such file.")
+                        print("No such file.")
             elif option == "create":
                 filename = input("Enter name of the file to create:\n")
                 if filename:
@@ -310,7 +313,7 @@ class SSPCI(cmd.Cmd):
 
     def do_ver(self, none):  # Adding none was necessary for positional arguments reasons.
         """Prints the current version of SSPCI."""
-        print("SSPCI Version 0.4.0-alpha")
+        print("SSPCI Version 0.4.1-alpha")
         print("Made by NovaCow")
 
     def do_exit(self, none):  # Adding that none was necessary, I hate it.
@@ -321,7 +324,7 @@ class SSPCI(cmd.Cmd):
         print("Thank you for using SSPCI!")
         return True
 
-    def do_end(self, none):  # Adding that none was necessary, I hate it.
+    def do_end(self, none):  # Adding that none was necessary, I hate it. Should have deprecated this ages ago
         """
         Ends the current SSPCI session.
         """

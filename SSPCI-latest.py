@@ -1,20 +1,31 @@
 import cmd
 import os
-import hashlib
+import platform
+import hashlib  # This can fuck off honestly
 import shutil
 
-# Currently on Version 0.3.2-alpha-latest
-# Based on release: f30cee8
-# This is a "latest" release, therefore it's not very extremely stable and may be ridden with bugs.
+
+# Currently on Version 0.4.0-alpha
 # This is the SSPCI, Super Simple Python Command Interpreter, made in... well... Python
 # Should be supported on (almost) everything. As it uses common libraries.
 # I should at some point add error handling. Because I don't have that currently.
 # But I'm working on error handling now! :)
+# I also need to put more comments everywhere, I barely use them.
 class SSPCI(cmd.Cmd):
     intro = "This is the SSPCI Shell, type help or ? to list current supported commands.\n"
     prompt = "sspci> "
     file = None
     CurrDir = os.getcwd()
+    print("SSPCI version 0.4.0-alpha running on " + platform.system() + " " + platform.release())
+    if platform.system == "Linux":
+        if os.access("/root", os.R_OK):
+            print("WARNING!! You might be running SSPCI as root! THIS CAN CAUSE IRREPARABLE DAMAGE!! USE AT YOUR OWN RISK!")
+        else:
+            pass
+    elif platform.system == "Darwin":
+        print("You are running an unsupported operating system (Probably macOS). This should cause no harm, but if there are any bugs, I don't think I can help.")
+    else:
+        pass
 
     print("The current working directory is: " + str(CurrDir))
 
@@ -33,11 +44,14 @@ class SSPCI(cmd.Cmd):
         On Linux: ls /home/example/example"""
         if listedDir:
             if os.path.isdir(listedDir):
-                FilesInDir = os.listdir(listedDir)  # An issue with this method is that everything is printed on one
-                print(str(FilesInDir))  # line.  So if your directory is really full, your line can be very, very long
-                # But it works, and that's what matters.
+                if os.access(listedDir, os.R_OK):
+                    FilesInDir = os.listdir(listedDir)  # An issue with this method is that everything is printed on one
+                    print(str(FilesInDir))  # line.  So if your directory is really full, your line can be very, very long
+                    # But it works, and that's what matters.
+                else:
+                    print("Cannot list directory " + listedDir + ". Make sure you have permissions to access this directory.")
             else:
-                print("Directory doesn't exist.")
+                print(listedDir + ": No such directory.")
         else:
             listedDir = os.getcwd()
             print("The current directory is " + listedDir)  # Only said if no directory was specified.
@@ -51,11 +65,14 @@ class SSPCI(cmd.Cmd):
         On Linux: cd /home/example/example"""
         if directory:
             if os.path.isdir(directory):
-                os.chdir(directory)  # Switching directories!
-                CurrDir = os.getcwd()  # I know it's ugly, but it sorta works.
-                print("Switched working directory to: " + CurrDir)
+                if os.access(directory, os.R_OK):  # Checks if we have access to a directory (Because sometimes we don't)
+                    os.chdir(directory)  # Switching directories!
+                    CurrDir = os.getcwd()  # I know it's ugly, but it sorta works.
+                    print("Switched working directory to: " + CurrDir)
+                else:
+                    print("Cannot enter directory " + directory + ". Make sure you have permissions to access this directory.")
             else:
-                print("Cannot enter directory " + directory + ". Check if you spelled its name correctly.")
+                print(directory + ": No such directory")
 
         else:
             CurrDir = os.getcwd()  # If no new directory was specified, we say what directory we're currently in.
@@ -78,8 +95,8 @@ class SSPCI(cmd.Cmd):
         On Windows: rmdir d:/example/example
         On Linux: rmdir /home/example/example"""
         if directory:
-            if os.path.isdir(directory):
-                os.rmdir(directory)
+            if os.path.isdir(directory):  # Checks if the directory the user entered does exist.
+                os.rmdir(directory)  # And removes it if it does exist.
                 print("Operation complete.")
             else:
                 print("Directory doesn't exist or other error.")
@@ -91,22 +108,104 @@ class SSPCI(cmd.Cmd):
         On Windows: rmdir d:/example/example
         On Linux: rmdir /home/example/example"""
         if directory:
-            if os.path.isdir(directory):
-                shutil.rmtree(directory)
+            if os.path.isdir(directory):  # Checks if the directory the user entered does exist.
+                shutil.rmtree(directory)  # And creates it if it exists.
                 print("Operation complete.")
             else:
                 print("Directory doesn't exist or other error.")
         else:
             print("No directory specified.")
 
-
     def do_createfile(self, filename):
         """Creates a file in the working directory. Usage: createfile amazingFileName.txt"""
         if filename:
-            fileToCreate = open(filename, "x")
+            fileToCreate = open(filename, "x")  # Creates a file using the open() function, the "x" stands for create.
             print("Operation complete.")
         else:
             print("No filename specified.")
+
+    # If you did a contest to see what the most unreadable piece of code was,
+    # I think this might win! Don't worry though, I'll add comments (to ease the pain).
+
+    def do_file(self, option):  # I HATE POSITIONAL ARGUMENTS!
+        """Is the default command for file handling, has options as: read, write, create. Usage: file create.
+           Still highly experimental, that's why the old options still remain."""
+        if option:
+            if option == "read":  # This is maybe the most ugliest code I've ever seen! And this is just the "read" option!
+                filename = input("Enter location of the file to read:\n")
+                if os.path.isfile(filename):
+                    if os.access(filename):
+                        fileToRead = open(filename, "r")
+                        print(fileToRead.read())
+                        fileToRead.close()
+                    else:
+                        print("You don't have permissions to access this file.")
+                else:
+                    print("No such file.")
+            elif option == "write":
+                filename = input("Enter location of the file to write to:\n")
+                if os.path.isfile(filename):
+                    if os.access(filename):
+                        textToWrite = input("Enter text to be written to file:\n")
+                        if textToWrite:
+                            fileToOpen = open(filename, "a")
+                            fileToOpen.write(textToWrite)
+                            fileToOpen.close()
+                            print("Operation complete.")
+                        else:
+                            print("No text specified for writing to file.")
+                    else:
+                        print("You don't have the permissions to access this file.")
+                else:
+                    fileCreateQ = input("No such file. Do you want to create it? [y/n] ")
+                    if fileCreateQ == "y":
+                        fileToCreate = open(filename, "x")
+                        textToWrite = input("Enter text to be written to file:\n")
+                        if textToWrite:
+                            fileToOpen = open(filename, "a")
+                            fileToOpen.write(textToWrite)
+                            fileToOpen.close()
+                            print("Operation complete.")
+                        else:
+                            print("No text specified for writing to file.")
+                    elif fileCreateQ == "Y":
+                        fileToCreate = open(filename, "x")
+                        textToWrite = input("Enter text to be written to file:\n")
+                        if textToWrite:
+                            fileToOpen = open(filename, "a")
+                            fileToOpen.write(textToWrite)
+                            fileToOpen.close()
+                            print("Operation complete.")
+                        else:
+                            print("No text specified for writing to file.")
+                    elif fileCreateQ == "n":
+                        print("Aborted.")
+                    elif fileCreateQ == "N":
+                        print("Aborted.")
+                    else:
+                        print("No selection made, aborting...")
+            elif option == "overwrite":
+                filename = input("Enter location of the file to overwrite:\n")
+                if os.path.isfile(filename):
+                    textToWrite = input("Enter text to be written to file:\n")
+                    if textToWrite:
+                        fileToOpen = open(filename, "w")
+                        fileToOpen.write(textToWrite)
+                        fileToOpen.close()
+                        print("Operation complete.")
+                    else:
+                        print("No text specified for writing to file.")
+                else:
+                    print("No such file.")
+            elif option == "create":
+                filename = input("Enter name of the file to create:\n")
+                if filename:
+                    fileToCreate = open(filename, "x")
+                    print("Operation complete.")
+                else:
+                    print("No filename specified.")
+        else:
+            print("No option specified.")
 
 
     def do_write(self, filename):
@@ -122,7 +221,7 @@ class SSPCI(cmd.Cmd):
                 else:
                     print("No text specified for writing to file.")
             else:
-                fileCreateQ = input("File doesn't exist. Do you want to create it? [y/n] ")
+                fileCreateQ = input("No such file. Do you want to create it? [y/n] ")
                 if fileCreateQ == "y":
                     fileToCreate = open(filename, "x")
                     textToWrite = input("Enter text to be written to file:\n")
@@ -149,8 +248,6 @@ class SSPCI(cmd.Cmd):
                     print("Aborted.")
                 else:
                     print("No selection made, aborting...")
-
-
         else:
             print("No file specified or other error.")
 
@@ -176,7 +273,7 @@ class SSPCI(cmd.Cmd):
                 fileToOpen = open(filename, "r")
                 print(fileToOpen.read())
             else:
-                print("File doesn't exist.")
+                print("No such file.")
         else:
             print("No file specified or other error.")
 
@@ -188,57 +285,22 @@ class SSPCI(cmd.Cmd):
                 shutil.copyfile(filename, desName)
                 print("Operation complete.")
             else:
-                print("Source file doesn't exist.")
+                print("No such file.")
         else:
             print("No source file specified.")
 
-    def do_md5(self, hashenc):
-        """Hashes what you enter in MD5 format. Usage: md5 amazing-example"""
-        if hashenc:
-            hashenc = hashenc.encode()  # Encoding the string because otherwise the hasher doesn't work.
-            hashResult = hashlib.md5(hashenc).hexdigest()  # Hashing in MD5 and saving the result in hashResult
-            print(hashResult)  # And then printing it, otherwise nothing would happen
-        else:
-            print("Nothing to hash.")
+    # As if someone ever needs hashing.
+    # And of all things does it with this garbage python code.
+    # So removing is in order, although I will keep one algorithm.
+    # So as to not lose the feature entirely.
+    # I won't be updating it anymore though, so if anything breaks it, oh well.
+    # But, if you use this program for hashing only, I'm sorry, but you're stupid.
+    # There are business solutions, and it's even built-in the Linux terminal!
+    # So, as update 0.5.0-alpha rolls around I will remove this garbage thing.
+    # And yes, to make it harder to use, I've only implemented SHA-224 >:D
 
-    def do_sha1(self, hashenc):
-        """Hashes what you enter in SHA-1 format. Usage: sha1 amazing-example"""
-        if hashenc:
-            hashenc = hashenc.encode()  # Encoding the string because otherwise the hasher doesn't work.
-            hashResult = hashlib.sha1(hashenc).hexdigest()  # Hashing in SHA-1 and saving the result in hashResult
-            print(hashResult)  # And then printing it, otherwise nothing would happen
-        else:
-            print("Nothing to hash.")
-
-    def do_sha256(self, hashenc):
-        """Hashes what you enter in SHA-256 format. Usage: sha256 amazing-example"""
-        if hashenc:
-            hashenc = hashenc.encode()  # Encoding the string because otherwise the hasher doesn't work.
-            hashResult = hashlib.sha256(hashenc).hexdigest()  # Hashing in SHA-384 and saving the result in hashResult
-            print(hashResult)  # And then printing it, otherwise nothing would happen
-        else:
-            print("Nothing to hash.")
-
-    def do_sha384(self, hashenc):
-        """Hashes what you enter in SHA-384 format. Usage: sha384 amazing-example"""
-        if hashenc:
-            hashenc = hashenc.encode()  # Encoding the string because otherwise the hasher doesn't work.
-            hashResult = hashlib.sha384(hashenc).hexdigest()  # Hashing in SHA-384 and saving the result in hashResult
-            print(hashResult)  # And then printing it, otherwise nothing would happen
-        else:
-            print("Nothing to hash.")
-
-    def do_sha512(self, hashenc):
-        """Hashes what you enter in SHA-512 format. Usage: sha512 amazing-example"""
-        if hashenc:
-            hashenc = hashenc.encode()  # Encoding the string because otherwise the hasher doesn't work.
-            hashResult = hashlib.sha512(hashenc).hexdigest()  # Hashing in SHA-512 and saving the result in hashResult
-            print(hashResult)  # And then printing it, otherwise nothing would happen
-        else:
-            print("Nothing to hash.")
-
-    def do_sha224(self, hashenc):
-        """Hashes what you enter in SHA-224 format. Usage: sha224 amazing-example"""
+    def do_hash(self, hashenc):
+        """Hashes what you enter in desired format. Usage: hash amazing-example"""
         if hashenc:
             hashenc = hashenc.encode()  # Encoding the string because otherwise the hasher doesn't work.
             hashResult = hashlib.sha224(hashenc).hexdigest()  # Hashing in SHA-224 and saving the result in hashResult
@@ -248,7 +310,7 @@ class SSPCI(cmd.Cmd):
 
     def do_ver(self, none):  # Adding none was necessary for positional arguments reasons.
         """Prints the current version of SSPCI."""
-        print("SSPCI Version 0.3.2-alpha-latest")
+        print("SSPCI Version 0.4.0-alpha")
         print("Made by NovaCow")
 
     def do_exit(self, none):  # Adding that none was necessary, I hate it.

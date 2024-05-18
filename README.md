@@ -11,3 +11,4 @@ There are some basic commands, type help for a list of them!
   * shutil
   * platform
   * cmd
+  * importlib
